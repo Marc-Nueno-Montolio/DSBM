@@ -109,6 +109,10 @@ void LCD_ClearDisplay(void){
 //     If Blink is TRUE turn on blinking, if not, deactivate blinking
 void LCD_Config(int32_t Disp,int32_t Cursor,int32_t Blink){
 	lcdNibble(0,0);
+	if(Disp!=0) Disp = 1;
+	if(Cursor!=0) Cursor = 1;
+	if(Blink!=0) Blink = 1;
+
 	lcdNibble((1<<3)+(Disp<<2)+(Cursor<<1)+(Blink),0);
 	DELAY_US(40);
 }
@@ -118,15 +122,20 @@ void LCD_Config(int32_t Disp,int32_t Cursor,int32_t Blink){
 //    row: Row     (0..LCD_ROWS-1)
 void LCD_GotoXY(int32_t col, int32_t row) {
 	// This code is requested in P2.7
-	int32_t num=8;//Primera fila
-	if(!(row==0)){ 
-	// 2a fila C=12=8+4 (HEXA) 
-	num=num|0x04;
-	}
-	lcdNibble(num,0);
-	lcdNibble(col,0);
+	row=2;
+	col=1;
+
+	LCD_ROWS = 2;
+	LCD_COLUMNS = 16;
+
+	int32_t ADD = 0x80|65;
+	// 10000000	0x80
+
+	lcdNibble(ADD>>4,0);
+	lcdNibble(ADD,0);
+
 	DELAY_US(40);
-} 
+}
 
 
 // Send a character to the LCD at the current position
@@ -147,7 +156,18 @@ void LCD_SendString(char *string) {
 		LCD_SendChar(string[i]);
 		i++;
 	}
-} 
+}
+
+void LCD_CustomChar(int32_t pos, uint32_t *data){
+	int32_t car = pos<<3;
+	lcdNibble(0b100|(car>>4),0);
+	lcdNibble(car & 0b111, 0);
+	int32_t i;
+	for(i = 0; i < 8; i++){
+		lcdNibble(data[i]>>4, 0);
+		lcdNibble(data[i], 1);
+	}
+}
 
 /********** PUBLIC FUNCTIONS ALREADY IMPLEMENTED ***************
  Those functions are provided to reduce the codding effort
@@ -213,6 +233,5 @@ void LCD_Init(void) {
 	lcdNibble(0x0B, 1);
 	DELAY_US(50);
 }
-
 
 
